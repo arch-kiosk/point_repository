@@ -1,0 +1,11 @@
+/__pychache__/
+/__pycache__
+*.dmp
+*.out
+/temp/
+/log/
+*.css.map
+*.pstat
+*.zip
+callgrind*.*
+.vscode/

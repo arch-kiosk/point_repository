@@ -1,0 +1,78 @@
+{% extends "kioskbasic.html" %}
+{% block links %}
+{#  <link rel=stylesheet type=text/css href="{{ url_for('static', pointname='styles/materialize/materialize.css') }}?v=1"/>#}
+  <link rel=stylesheet type=text/css href="{{ url_for('pointrepository.static', filename='pointrepository.css') }}?v=1"/>
+{% endblock %}
+{% block title %}
+  <div id="subtitle-shadow">Kiosk</div>
+  <div id="subtitle">Point Repository</div>
+{% endblock %}
+{% block body %}
+  {% if modify_privilege %}
+    {% if topic == headline %}
+      <div id="pr-drop-area-div" class="upload-area">
+        <input id="pr-point-upload" type="file" name="file">
+        <div class="upload-area-top">
+          <div></div>
+          <div></div>
+        </div>
+        <div id="pr-upload-progress" class="upload-area-center">Please drag a file here or click to upload</div>
+        <div class="upload-area-bottom">
+          <div></div>
+          <div></div>
+        </div>
+      </div>
+    {% endif %}
+  {% endif %}
+  <form id="sort-form" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    <input id="sort-by" name="sort-by" type="hidden" value="{{ sort_by }}"/>
+    <input id="sort-order" name="sort-order" type="hidden" value="{{ sort_order }}"/>
+  </form>
+  <div class="pr-point-list">
+      {% for h in headers %}
+        <div class="pr-point-header {% if h.caption in ['point name', 'category'] %} left {% else %} right {% endif %}"
+             sort-field="{{ h.caption }}">
+          <div>
+            {{ h.caption }}{{ h.extra_caption }}
+          </div>
+          {% if h.sort %}
+            <i class="fas {{ h.sort }}"></i>
+          {% endif %}
+
+        </div>
+      {% endfor %}
+      {% for p in points %}
+        <div>{{ p.category }}</div>
+        <div>{{ p.name }}</div>
+        <div class="right-align">{{ p.latin_date }}</div>
+        <div class="right-align"> {{ p.longitude }}</div>
+        <div class="right-align"> {{ p.latitude }}</div>
+        <div class="right-align"> {{ p.elevation }}</div>
+      {% endfor %}
+  </div>
+
+  <script src="{{ url_for('pointrepository.static', filename='scripts/pointrepository.js') }}?v=1"></script>
+  <script>
+    function pr_init_failed() {
+      kioskErrorToast("The point repository cannot be initialized. " +
+            "Either your session has timed out or a page refresh might help. ")
+    }
+
+    kioskStartWhenReady(ensureLibrariesAndInitPointRepository, pr_init_failed);
+
+    function ensureLibrariesAndInitPointRepository(attempts=0) {
+      if (typeof initPointRepository == 'undefined') {
+        if (attempts < 20) {
+          setTimeout(ensureLibrariesAndInitPointRepository, 300, attempts + 1);
+        } else {
+          pr_init_failed()
+        }
+      } else {
+        initPointRepository();
+      }
+    }
+
+    //# sourceURL=pointrepositoryplugin.js
+  </script>
+{% endblock %}
