@@ -1,8 +1,6 @@
-# 💼 The Office
+# 🌐 Point repository plugin 🌐
  
-## 🤸🏿👽🕵️ This repository is for people 🤸🤖🎅
-
-No matter for which field-project or which part of the software, it is here and only here in this repository where we all collaborate, report bugs and ideas, discuss ...
+A small plugin for Kiosk that manages and imports coordinates
 
 ## typical workplaces
 - [testers work here](https://github.com/arch-kiosk/arch-kiosk-office/projects/25)
