@@ -28,7 +28,7 @@ from pointimporter import PointImporter
 _plugin_name_ = "pointrepositoryplugin"
 _controller_name_ = "pointrepository"
 _url_prefix_ = '/' + _controller_name_
-plugin_version = 0.1
+plugin_version = 1
 
 LOCAL_PRIVILEGES = {
     MODIFY_DATA: "modify data",
