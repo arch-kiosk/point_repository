@@ -97,5 +97,6 @@ function setPointRepositoryInstallUploadProgress(id, percent) {
 }
 
 function uploadFinished (instance, toast, closedBy) {
-  location.reload()
+  let route = getRoutefor("pointrepository.pointrepository_show")
+  window.location.replace(route)
 }

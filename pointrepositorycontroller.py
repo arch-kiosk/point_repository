@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+import pprint
 from collections import namedtuple
 from http import HTTPStatus
 
@@ -22,6 +23,7 @@ from kioskresult import KioskResult
 from kiosksqldb import KioskSQLDb
 from orm.dsdtable import DSDTable
 from plugins.kioskfilemakerworkstationplugin.kioskfilemakerworkstationcontroller import check_ajax
+from pointimporter import PointImporter
 
 _plugin_name_ = "pointrepositoryplugin"
 _controller_name_ = "pointrepository"
@@ -166,9 +168,10 @@ def pointrepository_upload():
                 logging.info(f"pointrepositorycontroller.pointrepository_upload: Received file {file.filename}")
                 filename = kioskstdlib.get_filename(file.filename)
 
-                if not import_points(file, filename):
+                rc, err = import_points(file, filename)
+                if not rc:
                     result.message = f'The file {filename} was uploaded correctly but an error occurred ' \
-                                     f'when importing the coordinates.'
+                                     f'when importing the coordinates: {err}'
                 else:
                     result.success = True
                     result.message = "file successfully uploaded."
@@ -185,10 +188,50 @@ def pointrepository_upload():
         abort(HTTPStatus.INTERNAL_SERVER_ERROR, repr(e))
 
 
-def import_points(file, filename: str):
-    cfg:KioskConfig = kioskglobals.get_config()
+def import_points(file, filename: str) -> (bool, str):
+    def update_coordinates(row: dict):
+        sql = "INSERT INTO "
+        sql += f"""coordinates ("coordinate_name","category", "description", "longitude", 
+        "latitude", "elevation", "modified", "modified_by")
+        """
+        coordinates = DSDTable(dsd, "coordinates")
+        if coordinates.get_one(f"category=%s and coordinate_name=%s", [row['category'], row['point_name']]):
+            if "longitude":
+                if "longitude" in row:
+                    coordinates.longitude = row["longitude"]
+                if "latitude" in row:
+                    coordinates.latitude = row["latitude"]
+                if "elevation" in row:
+                    coordinates.elevation = row["elevation"]
+                if "description" in row:
+                    coordinates.description = row["description"]
+                coordinates.modified_by = current_user.repl_user_id
+                coordinates.modified = datetime.datetime.now()
+                coordinates.update()
+        else:
+            coordinates.category = row["category"]
+            coordinates.coordinate_name = row["point_name"]
+            coordinates.longitude = row["longitude"] if "longitude" in row else None
+            coordinates.latitude = row["latitude"] if "latitude" in row else None
+            coordinates.elevation = row["elevation"] if "elevation" in row else None
+            coordinates.description = row["description"] if "description" in row else ""
+            coordinates.modified_by = current_user.repl_user_id
+            coordinates.modified = datetime.datetime.now()
+            coordinates.add()
+
+    cfg: KioskConfig = kioskglobals.get_config()
+    dsd = Dsd3Singleton.get_dsd3()
     temp_dir = cfg.get_temporary_upload_path()
     dest_file = os.path.join(temp_dir, filename)
     file.save(dest_file)
-    point_importer = PointImporter(dest_file)
+    point_importer = PointImporter(dest_file, get_plugin_config())
+    try:
+        point_importer.load(update_coordinates)
+        KioskSQLDb.commit()
+        logging.debug(f"pointrepositorycontroller.import_points: import committed.")
+        return True, ''
+    except BaseException as e:
+        KioskSQLDb.rollback()
+        logging.error(f"pointrepositorycontroller.import_points: import rolled back because of {repr(e)}")
+        return False, repr(e)
 
