@@ -34,20 +34,19 @@
         <div class="pr-point-header {% if h.caption in ['point name', 'category'] %} left {% else %} right {% endif %}"
              sort-field="{{ h.caption }}">
           <div>
-            {{ h.caption }}{{ h.extra_caption }}
+            {{ h.caption }}
           </div>
           {% if h.sort %}
             <i class="fas {{ h.sort }}"></i>
           {% endif %}
-
         </div>
       {% endfor %}
       {% for p in points %}
-        <div>{{ p.category }}</div>
+        <div>{{ p.category if p.category else '' }}</div>
         <div>{{ p.name }}</div>
         <div class="right-align">{{ p.latin_date }}</div>
-        <div class="right-align"> {{ p.longitude }}</div>
         <div class="right-align"> {{ p.latitude }}</div>
+        <div class="right-align"> {{ p.longitude }}</div>
         <div class="right-align"> {{ p.elevation }}</div>
       {% endfor %}
   </div>

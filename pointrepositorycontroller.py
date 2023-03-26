@@ -129,8 +129,8 @@ def pointrepository_show():
     headers = [Header('category', ''),
                Header('point name', ''),
                Header('modified', ''),
-               Header('longitude', ''),
                Header('latitude', ''),
+               Header('longitude', ''),
                Header('elevation', '')
                ]
     for header in headers:
@@ -195,7 +195,7 @@ def import_points(file, filename: str) -> (bool, str):
         "latitude", "elevation", "modified", "modified_by")
         """
         coordinates = DSDTable(dsd, "coordinates")
-        if coordinates.get_one(f"category=%s and coordinate_name=%s", [row['category'], row['point_name']]):
+        if coordinates.get_one(f"coalesce(category,'')=%s and coordinate_name=%s", [row['category'], row['point_name']]):
             if "longitude":
                 if "longitude" in row:
                     coordinates.longitude = row["longitude"]
