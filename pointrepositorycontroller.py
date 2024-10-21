@@ -10,6 +10,7 @@ from flask import Blueprint, redirect, render_template, url_for, request, sessio
 from flask_allows import requires
 from flask_login import current_user
 
+import kioskdatetimelib
 import kioskglobals
 import kioskstdlib
 from authorization import MODIFY_DATA, MANAGE_SERVER_PRIVILEGE, \
@@ -21,6 +22,7 @@ from kioskconfig import KioskConfig
 from kiosklib import is_ajax_request
 from kioskresult import KioskResult
 from kiosksqldb import KioskSQLDb
+from kioskuser import KioskUser
 from orm.dsdtable import DSDTable
 from plugins.kioskfilemakerworkstationplugin.kioskfilemakerworkstationcontroller import check_ajax
 from pointimporter import PointImporter
@@ -195,7 +197,8 @@ def import_points(file, filename: str) -> (bool, str):
         "latitude", "elevation", "modified", "modified_by")
         """
         coordinates = DSDTable(dsd, "coordinates")
-        if coordinates.get_one(f"coalesce(category,'')=%s and coordinate_name=%s", [row['category'], row['point_name']]):
+        if coordinates.get_one(f"coalesce(category,'')=%s and coordinate_name=%s",
+                               [row['category'], row['point_name']]):
             if "longitude":
                 if "longitude" in row:
                     coordinates.longitude = row["longitude"]
@@ -206,7 +209,9 @@ def import_points(file, filename: str) -> (bool, str):
                 if "description" in row:
                     coordinates.description = row["description"]
                 coordinates.modified_by = current_user.repl_user_id
-                coordinates.modified = datetime.datetime.now()
+                coordinates.modified = kioskdatetimelib.get_utc_now(no_tz_info=True, no_ms=True)
+                coordinates.modified_tz = current_user.get_active_tz_index()
+                coordinates.modified_ww = current_user.get_utc_as_user_timestamp(coordinates.modified)
                 coordinates.update()
         else:
             coordinates.category = row["category"]
@@ -216,7 +221,9 @@ def import_points(file, filename: str) -> (bool, str):
             coordinates.elevation = row["elevation"] if "elevation" in row else None
             coordinates.description = row["description"] if "description" in row else ""
             coordinates.modified_by = current_user.repl_user_id
-            coordinates.modified = datetime.datetime.now()
+            coordinates.modified = kioskdatetimelib.get_utc_now(no_tz_info=True, no_ms=True)
+            coordinates.modified_tz = current_user.get_active_tz_index()
+            coordinates.modified_ww = current_user.get_utc_as_user_timestamp(coordinates.modified)
             coordinates.add()
 
     cfg: KioskConfig = kioskglobals.get_config()
@@ -234,4 +241,3 @@ def import_points(file, filename: str) -> (bool, str):
         KioskSQLDb.rollback()
         logging.error(f"pointrepositorycontroller.import_points: import rolled back because of {repr(e)}")
         return False, repr(e)
-
