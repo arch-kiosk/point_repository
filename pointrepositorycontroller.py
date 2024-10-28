@@ -30,7 +30,7 @@ from pointimporter import PointImporter
 _plugin_name_ = "pointrepositoryplugin"
 _controller_name_ = "pointrepository"
 _url_prefix_ = '/' + _controller_name_
-plugin_version = 1
+plugin_version = 1.1
 
 LOCAL_PRIVILEGES = {
     MODIFY_DATA: "modify data",
@@ -126,7 +126,7 @@ def pointrepository_show():
         order_by += ", coordinate_name"
 
     for c in coordinates.get_many(order_by=order_by):
-        points.append(Point(c.category, c.coordinate_name, c.modified, c.longitude, c.latitude, c.elevation))
+        points.append(Point(c.category, c.coordinate_name, c.modified_ww, c.longitude, c.latitude, c.elevation))
 
     headers = [Header('category', ''),
                Header('point name', ''),
