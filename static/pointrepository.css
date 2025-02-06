@@ -253,6 +253,7 @@
 .pr-point-list div {
   padding: 0.25em 0.5em;
   user-select: text;
+  -webkit-user-select: text;
 }
 
 .pr-point-header {
